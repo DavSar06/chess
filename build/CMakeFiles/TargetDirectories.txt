@@ -1,0 +1,3 @@
+/home/mrdav/Documents/Projects/Chess Game/build/CMakeFiles/Chess.dir
+/home/mrdav/Documents/Projects/Chess Game/build/CMakeFiles/edit_cache.dir
+/home/mrdav/Documents/Projects/Chess Game/build/CMakeFiles/rebuild_cache.dir
