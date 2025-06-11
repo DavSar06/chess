@@ -27,6 +27,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "Game.hpp"
+#include "def.hpp"
 #include <bits/stdc++.h>
 
 const int WINDOW_SIZE = 600;
@@ -34,6 +35,7 @@ const int SQUARE_SIZE = WINDOW_SIZE / 8;
 const sf::Color LIGHT_SQUARE(240, 217, 181);
 const sf::Color DARK_SQUARE(181, 136, 99);
 const sf::Color TEXT_COLOR(70, 70, 70);
+const sf::Color HIGHLIGHT_COLOR(100, 200, 100, 150);
 
 int main() {
     Game::initBoard();
@@ -53,6 +55,11 @@ int main() {
         // You can proceed without font or handle the error differently
     }
 
+    bool pieceSelected = false;
+    int selectedRow = -1;
+    int selectedCol = -1;
+    vector<pii> possibleMoves;
+
     // Main loop
     while (window.isOpen()) {
         // Process events
@@ -60,6 +67,32 @@ int main() {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 window.close();
+            }else if (event.type == sf::Event::MouseButtonPressed) {
+              if (event.mouseButton.button == sf::Mouse::Left) {
+                // Get clicked square
+                int col = event.mouseButton.x / SQUARE_SIZE;
+                int row = event.mouseButton.y / SQUARE_SIZE;
+
+                if (!pieceSelected) {
+                  // Select a piece if there is one
+                  if (Game::board_[row][col]) {
+                    selectedRow = row;
+                    selectedCol = col;
+                    pieceSelected = true;
+                    // Get possible moves for this piece
+                    possibleMoves = Game::board_[row][col]->validMoves;
+                  }
+                }
+                else {  
+                  // Try to move the selected piece
+                  if (Game::board_[selectedRow][selectedCol]->isValidMove({row, col})) {
+                    Game::movePiece({selectedRow, selectedCol}, {row, col});
+                  }
+                  // Reset selection
+                  pieceSelected = false;
+                  possibleMoves.clear();
+                }
+              }
             }
         }
 
@@ -72,6 +105,21 @@ int main() {
                 sf::RectangleShape square(sf::Vector2f(SQUARE_SIZE, SQUARE_SIZE));
                 square.setPosition(col * SQUARE_SIZE, row * SQUARE_SIZE);
                 square.setFillColor((row + col) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE);
+
+
+                if (pieceSelected && row == selectedRow && col == selectedCol) {
+                    square.setFillColor(sf::Color::Yellow);
+                }
+                // Highlight possible moves
+                else if (pieceSelected && 
+                        std::find(possibleMoves.begin(), possibleMoves.end(), 
+                                 std::make_pair(row, col)) != possibleMoves.end()) {
+                    square.setFillColor(HIGHLIGHT_COLOR);
+                }
+                else {
+                    square.setFillColor((row + col) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE);
+                }
+      
                 window.draw(square);
 
                 if(Game::board_[row][col]){
@@ -121,9 +169,12 @@ int main() {
             window.draw(number);
         }
 
+        if(Game::endCheck()){
+          break;
+        }
+
         // Display everything
         window.display();
     }
-
     return 0;
 }

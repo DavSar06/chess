@@ -412,4 +412,5 @@ CMakeFiles/Chess.dir/source/main.cpp.o: \
  /usr/include/c++/13/memory_resource /usr/include/c++/13/barrier \
  /usr/include/c++/13/latch /usr/include/c++/13/syncstream \
  /home/mrdav/Documents/Projects/Chess\ Game/headers/Piece.hpp \
+ /home/mrdav/Documents/Projects/Chess\ Game/headers/def.hpp \
  /home/mrdav/Documents/Projects/Chess\ Game/headers/def.hpp
