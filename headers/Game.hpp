@@ -12,6 +12,11 @@ struct hmoves {
     pii to;  
 };
 
+struct from_to {
+  pii from;
+  pii to;
+};
+
 class Game {
 public:
     static vector<vector<Piece*>> board_;
@@ -19,7 +24,8 @@ public:
     static set<pii> playerMoves;
     static int moves;
     static vector<hmoves> history; 
-
+    static hmoves lastMove;
+    static vector<from_to> enPassants;
     Game();
     static void initBoard();
     static void displayBoard();

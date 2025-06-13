@@ -12,6 +12,8 @@ using namespace std;
 
 vector<vector<Piece*>> Game::board_ = vector<vector<Piece*>>(8, vector<Piece*>(8, nullptr));
 vector<hmoves> Game::history{};
+hmoves Game::lastMove;
+vector<from_to> Game::enPassants{};
 int Game::moves = 0;
 set<pii> Game::opponentMoves = {};
 set<pii> Game::playerMoves = {};
@@ -94,8 +96,15 @@ Calculating All Moves
 */
 void Game::validMovesForAll(){
     playerMoves.clear();
-    
     calculateOppMoves();
+    enPassants.clear();
+
+    int f = 1;
+    int t = 3;
+    if(moves%2){
+      f = 6;
+      t = 4;
+    }
 
     for(int i = 0; i < 8; i++){ 
         for(int j = 0; j < 8; j++){
@@ -106,6 +115,22 @@ void Game::validMovesForAll(){
                     for(auto& t: board_[i][j]->validMoves) playerMoves.insert(t);
                 }
             }
+        }
+    }
+
+    vector<int> m{};
+    if(tolower(lastMove.code) == 'y' && lastMove.from.first == f && lastMove.to.first == t) {
+        if(lastMove.from.second > 0) m.push_back(-1);
+        if(lastMove.from.second < 7) m.push_back(1);
+
+        for(int i:m){
+          auto& pn = board_[t][lastMove.from.second + i];
+          if(pn != nullptr && tolower(pn->getCode()) == 'y' && pn->getColor() != lastMove.color){
+            int x = (f+t)/2;
+            int y = lastMove.from.second;
+            pn->validMoves.push_back({x, y});
+            enPassants.push_back({{t, lastMove.from.second + i}, {x, y}});
+          }
         }
     }
 }
@@ -181,10 +206,21 @@ void Game::movePiece(pii from, pii to){
     if(board_[from.first][from.second]){
         if(board_[from.first][from.second]->getColor() == 'w' && moves % 2 == 0 || board_[from.first][from.second]->getColor() == 'b' && moves % 2){
             if(board_[from.first][from.second]->isValidMove(to)){
-                free(board_[to.first][to.second]);
+                bool isEnPassant = false;
+                for (auto& z: enPassants) {
+                  if (z.from.first == from.first && z.from.second == from.second && z.to.first == to.first && z.to.second == to.second) {
+                    isEnPassant = true;
+                  }
+                }
+                if (isEnPassant){
+                  free(board_[from.first][to.second]);
+                  board_[from.first][to.second] = nullptr;
+                }
+                else free(board_[to.first][to.second]);
                 board_[to.first][to.second] = board_[from.first][from.second];
                 board_[from.first][from.second] = nullptr;
-                history.push_back({board_[to.first][to.second]->getColor(),board_[to.first][to.second]->getCode(),from,to});
+                lastMove = {board_[to.first][to.second]->getColor(),board_[to.first][to.second]->getCode(),from,to};
+                history.push_back(lastMove);
                 moves++;
                 validMovesForAll();
             }else {
