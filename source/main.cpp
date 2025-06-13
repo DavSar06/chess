@@ -35,7 +35,9 @@ const int SQUARE_SIZE = WINDOW_SIZE / 8;
 const sf::Color LIGHT_SQUARE(240, 217, 181);
 const sf::Color DARK_SQUARE(181, 136, 99);
 const sf::Color TEXT_COLOR(70, 70, 70);
-const sf::Color HIGHLIGHT_COLOR(100, 200, 100, 150);
+const sf::Color POSSIBLE_COLOR(100, 200, 100, 150);
+const sf::Color HIGHLIGHT_COLOR(255, 100, 100, 150);
+const float HIGHLIGHT_SQUARE_SIZE = SQUARE_SIZE * 0.8f;
 
 int main() {
     Game::initBoard();
@@ -73,14 +75,16 @@ int main() {
                 int col = event.mouseButton.x / SQUARE_SIZE;
                 int row = event.mouseButton.y / SQUARE_SIZE;
 
+                auto& sq = Game::board_[row][col];
+
                 if (!pieceSelected) {
                   // Select a piece if there is one
-                  if (Game::board_[row][col]) {
+                  if (sq && (Game::moves % 2 == 1 && sq->getColor() == 'b' || Game::moves % 2 == 0 && sq->getColor() == 'w')){
                     selectedRow = row;
                     selectedCol = col;
                     pieceSelected = true;
                     // Get possible moves for this piece
-                    possibleMoves = Game::board_[row][col]->validMoves;
+                    possibleMoves = sq->validMoves;
                   }
                 }
                 else {  
@@ -106,21 +110,29 @@ int main() {
                 square.setPosition(col * SQUARE_SIZE, row * SQUARE_SIZE);
                 square.setFillColor((row + col) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE);
 
+                window.draw(square);
 
                 if (pieceSelected && row == selectedRow && col == selectedCol) {
-                    square.setFillColor(sf::Color::Yellow);
+                    square.setFillColor(sf::Color(255, 255, 0, 150));
+                    window.draw(square);
                 }
                 // Highlight possible moves
-                else if (pieceSelected && 
-                        std::find(possibleMoves.begin(), possibleMoves.end(), 
-                                 std::make_pair(row, col)) != possibleMoves.end()) {
-                    square.setFillColor(HIGHLIGHT_COLOR);
+                else if (pieceSelected && std::find(possibleMoves.begin(), possibleMoves.end(), std::make_pair(row, col)) != possibleMoves.end()) {
+                    bool isCapture = (Game::board_[row][col] != nullptr);
+                    sf::RectangleShape highlightSquare(sf::Vector2f(HIGHLIGHT_SQUARE_SIZE, HIGHLIGHT_SQUARE_SIZE));
+                    highlightSquare.setPosition(col * SQUARE_SIZE + SQUARE_SIZE/2.0f, row * SQUARE_SIZE + SQUARE_SIZE/2.0f);
+                    highlightSquare.setOrigin(HIGHLIGHT_SQUARE_SIZE/2, HIGHLIGHT_SQUARE_SIZE/2);
+                    highlightSquare.setFillColor(isCapture ? HIGHLIGHT_COLOR : POSSIBLE_COLOR);
+                    if(isCapture) {
+                      highlightSquare.setOutlineThickness(2);
+                      highlightSquare.setOutlineColor(sf::Color(200, 50, 50, 200));
+                    }
+                    window.draw(highlightSquare);
                 }
                 else {
                     square.setFillColor((row + col) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE);
+                    window.draw(square);
                 }
-      
-                window.draw(square);
 
                 if(Game::board_[row][col]){
                   sf::Text pieceText;
