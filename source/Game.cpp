@@ -17,6 +17,13 @@ vector<from_to> Game::enPassants{};
 int Game::moves = 0;
 set<pii> Game::opponentMoves = {};
 set<pii> Game::playerMoves = {};
+bool whiteKingMoved = false;
+bool whiteRookKingSideMoved = false;
+bool whiteRookQueenSideMoved = false;
+bool blackKingMoved = false;
+bool blackRookKingSideMoved = false;
+bool blackRookQueenSideMoved = false;
+
 
 Game::Game() {
     return;
@@ -118,6 +125,81 @@ void Game::validMovesForAll(){
         }
     }
 
+    if (moves % 2 == 0 && whiteKingMoved == false) {
+      if (whiteRookKingSideMoved == false) {
+        bool canCastle = true;
+        for (int i = 5; i < 7; i++){
+          if(board_[7][i]) canCastle = false;
+        }
+        if(canCastle){
+          for (int i = 5; i < 7; i++){
+            board_[7][i] = board_[7][4];
+            board_[7][4] = nullptr;
+            calculateOppMoves();
+            if(testCheck()) canCastle = false;
+            board_[7][4] = board_[7][i];
+            board_[7][i] = nullptr;
+          }
+          if (canCastle) board_[7][4]->validMoves.push_back({7,6});
+        }
+      }
+      if(whiteRookQueenSideMoved == false){
+        bool canCastle = true;
+        for (int i = 3; i > 1; i--){
+          if(board_[7][i]) canCastle = false;
+        }
+        if(canCastle){
+          for (int i = 3; i > 1; i--){
+            board_[7][i] = board_[7][4];
+            board_[7][4] = nullptr;
+            calculateOppMoves();
+            if(testCheck()) canCastle = false;
+            board_[7][4] = board_[7][i];
+            board_[7][i] = nullptr;
+          }
+        }
+        if (canCastle) board_[7][4]->validMoves.push_back({7,6});
+      }
+    }
+
+    if (moves % 2 == 1 && blackKingMoved == false) {
+      if (blackRookKingSideMoved == false) {
+        bool canCastle = true;
+        for (int i = 5; i < 7; i++){
+          if(board_[0][i]) canCastle = false;
+        }
+        if(canCastle){
+          for (int i = 5; i < 7; i++){
+            board_[0][i] = board_[0][4];
+            board_[0][4] = nullptr;
+            calculateOppMoves();
+            if(testCheck()) canCastle = false;
+            board_[0][4] = board_[0][i];
+            board_[0][i] = nullptr;
+          }
+          if (canCastle) board_[0][4]->validMoves.push_back({0,6});
+        }
+      }
+      if(blackRookQueenSideMoved == false){
+        bool canCastle = true;
+        for (int i = 3; i > 1; i--){
+          if(board_[0][i]) canCastle = false;
+        }
+        if(canCastle){
+          for (int i = 3; i > 1; i--){
+            board_[0][i] = board_[0][4];
+            board_[0][4] = nullptr;
+            calculateOppMoves();
+            if(testCheck()) canCastle = false;
+            board_[0][4] = board_[0][i];
+            board_[0][i] = nullptr;
+          }
+        }
+        if (canCastle) board_[0][4]->validMoves.push_back({0,6});
+      }
+    }
+
+
     vector<int> m{};
     if(tolower(lastMove.code) == 'y' && lastMove.from.first == f && lastMove.to.first == t) {
         if(lastMove.from.second > 0) m.push_back(-1);
@@ -207,22 +289,43 @@ void Game::movePiece(pii from, pii to){
         if(board_[from.first][from.second]->getColor() == 'w' && moves % 2 == 0 || board_[from.first][from.second]->getColor() == 'b' && moves % 2){
             if(board_[from.first][from.second]->isValidMove(to)){
                 bool isEnPassant = false;
-                for (auto& z: enPassants) {
-                  if (z.from.first == from.first && z.from.second == from.second && z.to.first == to.first && z.to.second == to.second) {
-                    isEnPassant = true;
+                if (from.first == 7 && from.second == 0) whiteRookQueenSideMoved = true;
+                if (from.first == 7 && from.second == 7) whiteRookKingSideMoved = true;
+                if (from.first == 0 && from.second == 0) blackRookQueenSideMoved = true;
+                if (from.first == 0 && from.second == 7) blackRookKingSideMoved = true;
+                if (from.first == 7 && from.second == 4) whiteKingMoved = true;
+                if (from.first == 0 && from.second == 4) blackKingMoved = true;
+
+                if (tolower(board_[from.first][from.second]->getCode()) == 'q' && abs(from.second - to.second) > 1){
+                  board_[to.first][to.second] = board_[from.first][from.second];
+                  board_[from.first][from.second] = nullptr;
+                  if (to.second > 4) {
+                    board_[from.first][5] = board_[from.first][7];
+                    board_[from.first][7] = nullptr;
+                  }else {
+                    board_[from.first][3] = board_[from.first][0];
+                    board_[from.first][0] = nullptr;
                   }
+                }else {
+                  for (auto& z: enPassants) {
+                    if (z.from.first == from.first && z.from.second == from.second && z.to.first == to.first && z.to.second == to.second) {
+                      isEnPassant = true;
+                    }
+                  }
+                  if (isEnPassant){
+                    free(board_[from.first][to.second]);
+                    board_[from.first][to.second] = nullptr;
+                  }
+                  else free(board_[to.first][to.second]);
+                  
+                  board_[to.first][to.second] = board_[from.first][from.second];
+                  board_[from.first][from.second] = nullptr;
                 }
-                if (isEnPassant){
-                  free(board_[from.first][to.second]);
-                  board_[from.first][to.second] = nullptr;
-                }
-                else free(board_[to.first][to.second]);
-                board_[to.first][to.second] = board_[from.first][from.second];
-                board_[from.first][from.second] = nullptr;
                 lastMove = {board_[to.first][to.second]->getColor(),board_[to.first][to.second]->getCode(),from,to};
                 history.push_back(lastMove);
                 moves++;
                 validMovesForAll();
+                
             }else {
                 err = true;
                 errorMessage = "Invalid Move \n";
