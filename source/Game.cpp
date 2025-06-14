@@ -158,7 +158,7 @@ void Game::validMovesForAll(){
             board_[7][i] = nullptr;
           }
         }
-        if (canCastle) board_[7][4]->validMoves.push_back({7,6});
+        if (canCastle) board_[7][4]->validMoves.push_back({7,2});
       }
     }
 
@@ -195,7 +195,7 @@ void Game::validMovesForAll(){
             board_[0][i] = nullptr;
           }
         }
-        if (canCastle) board_[0][4]->validMoves.push_back({0,6});
+        if (canCastle) board_[0][4]->validMoves.push_back({0,2});
       }
     }
 
